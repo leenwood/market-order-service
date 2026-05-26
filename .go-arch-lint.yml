@@ -1,114 +1,187 @@
-version: 2
+version: 3
 workdir: .
 
 allow:
-  depOnAnyVendor: false
+  depOnAnyVendor: true
+  deepScan: false
+
+excludeFiles:
+  - "^.*_test\\.go$"
+
+# ── Components ────────────────────────────────────────────────────────────────
+#
+# Layer 0 — Foundation (no internal dependencies)
+#   internal          — config
+#   internal/core/domain
+#   internal/core/dto
+#   internal/platform/{logger,metrics,tracing}
+#
+# Layer 1a — Contracts (depend on Foundation)
+#   internal/core/port
+#   internal/core/mapper
+#
+# Layer 1b — Infrastructure (depend on Foundation + Contracts)
+#   internal/infra/storage/postgres
+#   internal/infra/outbound/httpclient
+#   internal/infra/outbound/cartclient
+#
+# Layer 2a — Use Cases (depend on Foundation + Contracts)
+#   internal/core/usecase
+#
+# Layer 2b — Application (depend on all lower layers)
+#   internal/app/http/middleware
+#   internal/app/http/handler
+#   internal/app/http
+#
+# Bootstrap (compose everything; called from cmd/)
+#   internal/app/migrate
+#   internal/app/service
+#
+# Entrypoints (cmd/*) — no restrictions
 
 components:
-  config:
+
+  # Layer 0 — Foundation
+  Config:
     in: internal
-  domain:
+  Domain:
     in: internal/core/domain
-  dto:
+  Dto:
     in: internal/core/dto
-  port:
-    in: internal/core/port
-  mapper:
-    in: internal/core/mapper
-  usecase:
-    in: internal/core/usecase
-  logger:
+  Logger:
     in: internal/platform/logger
-  metrics:
+  Metrics:
     in: internal/platform/metrics
-  tracing:
+  Tracing:
     in: internal/platform/tracing
-  postgres:
+
+  # Layer 1a — Contracts
+  Port:
+    in: internal/core/port
+  Mapper:
+    in: internal/core/mapper
+
+  # Layer 1b — Infrastructure
+  Postgres:
     in: internal/infra/storage/postgres
-  httpclient:
+  HTTPClient:
     in: internal/infra/outbound/httpclient
-  cartclient:
+  CartClient:
     in: internal/infra/outbound/cartclient
-  middleware:
+
+  # Layer 2a — Use Cases
+  UseCase:
+    in: internal/core/usecase
+
+  # Layer 2b — Application
+  Middleware:
     in: internal/app/http/middleware
-  handler:
+  Handler:
     in: internal/app/http/handler
-  apphttp:
+  AppHTTP:
     in: internal/app/http
-  appmigrate:
+
+  # Bootstrap
+  AppMigrate:
     in: internal/app/migrate
-  service:
+  AppService:
     in: internal/app/service
 
+  # Entrypoints
+  CmdServer:
+    in: cmd/server
+  CmdMigrate:
+    in: cmd/migrate
+
+# ── Dependency rules ──────────────────────────────────────────────────────────
 deps:
-  config:
-    canUse: []
-  domain:
-    canUse: []
-  dto:
-    canUse: []
-  port:
-    canUse:
-      - domain
-      - dto
-  mapper:
-    canUse:
-      - domain
-      - dto
-  usecase:
-    canUse:
-      - domain
-      - dto
-      - port
-      - mapper
-  logger:
-    canUse: []
-  metrics:
-    canUse: []
-  tracing:
-    canUse: []
-  postgres:
-    canUse:
-      - domain
-      - dto
-      - port
-  httpclient:
-    canUse:
-      - metrics
-  cartclient:
-    canUse:
-      - domain
-      - dto
-      - port
-      - httpclient
-  middleware:
-    canUse:
-      - logger
-      - metrics
-  handler:
-    canUse:
-      - domain
-      - dto
-      - usecase
-      - logger
-  apphttp:
-    canUse:
-      - config
-      - logger
-      - metrics
-      - middleware
-      - handler
-      - postgres
-      - usecase
-  service:
-    canUse:
-      - config
-      - logger
-      - metrics
-      - tracing
-      - postgres
-      - httpclient
-      - cartclient
-      - usecase
-      - apphttp
-      - appmigrate
+
+  # Layer 0 — Foundation: no internal deps, any vendor allowed
+  Config:
+    anyVendorDeps: true
+  Domain:
+    anyVendorDeps: true
+  Dto:
+    anyVendorDeps: true
+  Logger:
+    anyVendorDeps: true
+  Metrics:
+    anyVendorDeps: true
+  Tracing:
+    anyVendorDeps: true
+
+  # Layer 1a — Contracts
+  Port:
+    anyVendorDeps: true
+    mayDependOn:
+      - Domain
+      - Dto
+  Mapper:
+    anyVendorDeps: true
+    mayDependOn:
+      - Domain
+      - Dto
+
+  # Layer 1b — Infrastructure
+  Postgres:
+    anyVendorDeps: true
+    mayDependOn:
+      - Domain
+      - Dto
+      - Port
+  HTTPClient:
+    anyVendorDeps: true
+    mayDependOn:
+      - Metrics
+  CartClient:
+    anyVendorDeps: true
+    mayDependOn:
+      - Dto
+      - Port
+      - HTTPClient
+
+  # Layer 2a — Use Cases
+  UseCase:
+    anyVendorDeps: true
+    mayDependOn:
+      - Domain
+      - Dto
+      - Port
+      - Mapper
+
+  # Layer 2b — Application
+  Middleware:
+    anyVendorDeps: true
+    mayDependOn:
+      - Logger
+      - Metrics
+  Handler:
+    anyVendorDeps: true
+    mayDependOn:
+      - Domain
+      - Dto
+      - UseCase
+  AppHTTP:
+    anyVendorDeps: true
+    mayDependOn:
+      - Handler
+      - Middleware
+      - UseCase
+      - Postgres
+      - Metrics
+
+  # Bootstrap — compose everything
+  AppMigrate:
+    anyProjectDeps: true
+    anyVendorDeps: true
+  AppService:
+    anyProjectDeps: true
+    anyVendorDeps: true
+
+  # Entrypoints — no restrictions
+  CmdServer:
+    anyProjectDeps: true
+    anyVendorDeps: true
+  CmdMigrate:
+    anyProjectDeps: true
+    anyVendorDeps: true
