@@ -12,6 +12,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
+	_ "market-order-service/docs/swagger"
 	"market-order-service/internal/app/http/handler"
 	"market-order-service/internal/app/http/middleware"
 	"market-order-service/internal/core/usecase"
