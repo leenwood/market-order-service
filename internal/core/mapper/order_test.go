@@ -16,14 +16,14 @@ func TestDomainToResponse(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Second)
 
 	order := &domain.Order{
-		ID:            id,
-		UserID:        uid,
-		Status:        domain.StatusPending,
-		TotalAmount:   299.99,
-		PaymentMethod: "card",
+		ID:              id,
+		UserID:          uid,
+		Status:          domain.StatusPending,
+		TotalAmount:     299.99,
+		PaymentMethod:   "card",
 		DeliveryAddress: domain.DeliveryAddress{City: "Moscow", Street: "Pushkin St", Zip: "101000"},
-		CreatedAt:     now,
-		UpdatedAt:     now,
+		CreatedAt:       now,
+		UpdatedAt:       now,
 		Items: []domain.OrderItem{
 			{ProductID: uuid.New(), Name: "Item", Price: 299.99, Quantity: 1, Subtotal: 299.99},
 		},

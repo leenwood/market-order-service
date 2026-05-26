@@ -35,7 +35,7 @@ type Response struct {
 type cbState int
 
 const (
-	stateClosed   cbState = iota
+	stateClosed cbState = iota
 	stateOpen
 	stateHalfOpen
 )

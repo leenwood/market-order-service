@@ -1,10 +1,11 @@
 package appmigrate
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib" // register pgx driver for database/sql
 	"github.com/pressly/goose/v3"
 )
 
@@ -18,5 +19,5 @@ func Run(dsn, dir, command string) error {
 	if err := goose.SetDialect("postgres"); err != nil {
 		return err
 	}
-	return goose.Run(command, db, dir)
+	return goose.RunContext(context.Background(), command, db, dir)
 }

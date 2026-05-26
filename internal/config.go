@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -103,13 +102,6 @@ func getEnvDuration(key string, fallback time.Duration) time.Duration {
 		if d, err := time.ParseDuration(v); err == nil {
 			return d
 		}
-	}
-	return fallback
-}
-
-func getEnvStringSlice(key string, fallback []string) []string {
-	if v := os.Getenv(key); v != "" {
-		return strings.Split(v, ",")
 	}
 	return fallback
 }
