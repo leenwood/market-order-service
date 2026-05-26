@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"market-order-service/internal/core/domain"
 	"market-order-service/internal/core/dto"
 	"market-order-service/internal/core/port"
 	"market-order-service/internal/infra/outbound/httpclient"
@@ -26,7 +27,7 @@ var _ port.CartClient = (*Client)(nil)
 func (c *Client) GetCart(ctx context.Context, userID uuid.UUID) (*dto.CartResponse, error) {
 	resp, err := c.hc.Do(ctx, http.MethodGet, "/api/v1/cart/"+userID.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("get cart: %w", err)
+		return nil, fmt.Errorf("get cart: %w: %w", domain.ErrServiceUnavailable, err)
 	}
 	if resp.StatusCode == http.StatusNotFound {
 		return &dto.CartResponse{Items: nil}, nil
@@ -45,7 +46,7 @@ func (c *Client) GetCart(ctx context.Context, userID uuid.UUID) (*dto.CartRespon
 func (c *Client) ClearCart(ctx context.Context, userID uuid.UUID) error {
 	resp, err := c.hc.Do(ctx, http.MethodDelete, "/api/v1/cart/"+userID.String(), nil)
 	if err != nil {
-		return fmt.Errorf("clear cart: %w", err)
+		return fmt.Errorf("clear cart: %w: %w", domain.ErrServiceUnavailable, err)
 	}
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
 		return fmt.Errorf("clear cart: unexpected status %d", resp.StatusCode)
