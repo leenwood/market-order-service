@@ -1,0 +1,114 @@
+version: 2
+workdir: .
+
+allow:
+  depOnAnyVendor: false
+
+components:
+  config:
+    in: internal
+  domain:
+    in: internal/core/domain
+  dto:
+    in: internal/core/dto
+  port:
+    in: internal/core/port
+  mapper:
+    in: internal/core/mapper
+  usecase:
+    in: internal/core/usecase
+  logger:
+    in: internal/platform/logger
+  metrics:
+    in: internal/platform/metrics
+  tracing:
+    in: internal/platform/tracing
+  postgres:
+    in: internal/infra/storage/postgres
+  httpclient:
+    in: internal/infra/outbound/httpclient
+  cartclient:
+    in: internal/infra/outbound/cartclient
+  middleware:
+    in: internal/app/http/middleware
+  handler:
+    in: internal/app/http/handler
+  apphttp:
+    in: internal/app/http
+  appmigrate:
+    in: internal/app/migrate
+  service:
+    in: internal/app/service
+
+deps:
+  config:
+    canUse: []
+  domain:
+    canUse: []
+  dto:
+    canUse: []
+  port:
+    canUse:
+      - domain
+      - dto
+  mapper:
+    canUse:
+      - domain
+      - dto
+  usecase:
+    canUse:
+      - domain
+      - dto
+      - port
+      - mapper
+  logger:
+    canUse: []
+  metrics:
+    canUse: []
+  tracing:
+    canUse: []
+  postgres:
+    canUse:
+      - domain
+      - dto
+      - port
+  httpclient:
+    canUse:
+      - metrics
+  cartclient:
+    canUse:
+      - domain
+      - dto
+      - port
+      - httpclient
+  middleware:
+    canUse:
+      - logger
+      - metrics
+  handler:
+    canUse:
+      - domain
+      - dto
+      - usecase
+      - logger
+  apphttp:
+    canUse:
+      - config
+      - logger
+      - metrics
+      - middleware
+      - handler
+      - postgres
+      - usecase
+  service:
+    canUse:
+      - config
+      - logger
+      - metrics
+      - tracing
+      - postgres
+      - httpclient
+      - cartclient
+      - usecase
+      - apphttp
+      - appmigrate

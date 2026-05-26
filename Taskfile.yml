@@ -1,0 +1,86 @@
+version: "3"
+
+vars:
+  BIN_DIR: bin
+  MODULE: market-order-service
+
+tasks:
+  build:
+    cmds:
+      - CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o {{.BIN_DIR}}/server ./cmd/server
+      - CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o {{.BIN_DIR}}/migrate ./cmd/migrate
+
+  run:
+    env:
+      DATABASE_DSN: "postgres://orders:orders@localhost:5433/orders?sslmode=disable"
+      CART_SERVICE_URL: "http://localhost:8080"
+      HTTP_ADDR: ":8082"
+    cmds:
+      - go run ./cmd/server
+
+  test:
+    cmds:
+      - go test -race -count=1 -timeout=60s ./...
+
+  test:integration:
+    cmds:
+      - go test -race -count=1 -timeout=120s -tags=integration ./...
+
+  test:cover:
+    cmds:
+      - go test -race -count=1 -timeout=60s -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out -o coverage.html
+
+  lint:
+    cmds:
+      - go tool golangci-lint run ./...
+
+  arch:
+    cmds:
+      - go tool go-arch-lint check
+
+  arch:graph:
+    cmds:
+      - go tool go-arch-lint graph
+
+  fmt:
+    cmds:
+      - gofmt -w .
+      - goimports -local market-order-service -w .
+
+  vet:
+    cmds:
+      - go vet ./...
+
+  docker:up:
+    cmds:
+      - docker compose up -d
+
+  docker:down:
+    cmds:
+      - docker compose down
+
+  docker:reset:
+    cmds:
+      - docker compose down -v
+      - docker compose up -d
+
+  migrate:up:
+    env:
+      DATABASE_DSN: "postgres://orders:orders@localhost:5433/orders?sslmode=disable"
+    cmds:
+      - go run ./cmd/migrate -target=postgres -dir=migrations/postgres up
+
+  migrate:down:
+    env:
+      DATABASE_DSN: "postgres://orders:orders@localhost:5433/orders?sslmode=disable"
+    cmds:
+      - go run ./cmd/migrate -target=postgres -dir=migrations/postgres down
+
+  migrate:create:
+    cmds:
+      - goose -dir migrations/postgres create {{.CLI_ARGS}} sql
+
+  docs:
+    cmds:
+      - go tool swag init -g cmd/server/main.go -o docs/swagger
